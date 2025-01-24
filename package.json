@@ -1,0 +1,38 @@
+{
+  "name": "spotify-api-testing",
+  "version": "1.0.0",
+  "description": "Enterprise-grade Spotify API Testing Framework",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest --silent",
+    "test:verbose": "jest --verbose",
+    "test:debug": "jest --runInBand --detectOpenHandles",
+    "test:coverage": "jest --coverage",
+    "debug:auth": "ts-node src/debug-auth.ts",
+    "capture": "ts-node scripts/captureCodebase.ts",
+    "capture:verbose": "ts-node scripts/captureCodebase.ts --verbose",
+    "structure": "ts-node scripts/getStructure.ts"
+  },
+  "keywords": [
+    "spotify",
+    "api",
+    "testing",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.7",
+    "axios": "^1.7.9",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "clipboardy": "^4.0.0",
+    "dotenv": "^16.4.7"
+  }
+}
