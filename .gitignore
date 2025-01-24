@@ -1,4 +1,17 @@
-﻿node_modules/
+﻿# Dependencies
+node_modules/
+
+# Build output
 dist/
+
+# Environment
 .env
+
+# Testing
 coverage/
+
+# Generated files/output
+structure.txt
+structure.json
+paste.txt
+input.csv

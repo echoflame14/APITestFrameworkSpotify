@@ -1,0 +1,306 @@
+Skip to content
+Web API •References / Playlists / Get Playlist
+Get Playlist
+
+Get a playlist owned by a Spotify user.
+Important policy notes
+
+Request
+
+    playlist_id
+    string
+    Required
+
+    The Spotify ID of the playlist.
+    Example: 3cEYpjA9oz9GiPac4AsH4n
+    market
+    string
+
+    An ISO 3166-1 alpha-2 country code. If a country code is specified, only content that is available in that market will be returned.
+    If a valid user access token is specified in the request header, the country associated with the user account will take priority over this parameter.
+    Note: If neither market or user country are provided, the content is considered unavailable for the client.
+    Users can view the country that is associated with their account in the account settings.
+    Example: market=ES
+    fields
+    string
+
+    Filters for the query: a comma-separated list of the fields to return. If omitted, all fields are returned. For example, to get just the playlist''s description and URI: fields=description,uri. A dot separator can be used to specify non-reoccurring fields, while parentheses can be used to specify reoccurring fields within objects. For example, to get just the added date and user ID of the adder: fields=tracks.items(added_at,added_by.id). Use multiple parentheses to drill down into nested objects, for example: fields=tracks.items(track(name,href,album(name,href))). Fields can be excluded by prefixing them with an exclamation mark, for example: fields=tracks.items(track(name,href,album(!name,href)))
+    Example: fields=items(added_by.id,track(name,href,album(name,href)))
+    additional_types
+    string
+
+    A comma-separated list of item types that your client supports besides the default track type. Valid types are: track and episode.
+    Note: This parameter was introduced to allow existing clients to maintain their current behaviour and might be deprecated in the future.
+    In addition to providing this parameter, make sure that your client properly handles cases of new types in the future by checking against the type field of each object.
+
+Response
+
+A playlist
+
+    collaborative
+    boolean
+
+    true if the owner allows other users to modify the playlist.
+    description
+    string
+    Nullable
+
+    The playlist description. Only returned for modified, verified playlists, otherwise null.
+
+Known external URLs for this playlist.
+
+    spotify
+    string
+
+    The Spotify URL for the object.
+
+Information about the followers of the playlist.
+
+    href
+    string
+    Nullable
+
+    This will always be set to null, as the Web API does not support it at the moment.
+    total
+    integer
+
+    The total number of followers.
+
+href
+string
+
+A link to the Web API endpoint providing full details of the playlist.
+id
+string
+
+The Spotify ID for the playlist.
+
+Images for the playlist. The array may be empty or contain up to three images. The images are returned by size in descending order. See Working with Playlists. Note: If returned, the source URL for the image (url) is temporary and will expire in less than a day.
+
+    url
+    string
+    Required
+
+    The source URL of the image.
+    Example: "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228"
+    height
+    integer
+    Required
+    Nullable
+
+    The image height in pixels.
+    Example: 300
+    width
+    integer
+    Required
+    Nullable
+
+    The image width in pixels.
+    Example: 300
+
+name
+string
+
+The name of the playlist.
+
+The user who owns the playlist
+
+Known public external URLs for this user.
+
+    Information about the followers of this user.
+    href
+    string
+
+    A link to the Web API endpoint for this user.
+    id
+    string
+
+    The Spotify user ID for this user.
+    type
+    string
+
+    The object type.
+    Allowed values: "user"
+    uri
+    string
+
+    The Spotify URI for this user.
+    display_name
+    string
+    Nullable
+
+    The name displayed on the user's profile. null if not available.
+
+public
+boolean
+
+The playlist's public/private status (if it is added to the user's profile): true the playlist is public, false the playlist is private, null the playlist status is not relevant. For more about public/private status, see Working with Playlists
+snapshot_id
+string
+
+The version identifier for the current playlist. Can be supplied in other requests to target a specific playlist version
+
+The tracks of the playlist.
+
+    href
+    string
+    Required
+
+    A link to the Web API endpoint returning the full result of the request
+    Example: "https://api.spotify.com/v1/me/shows?offset=0&limit=20"
+    limit
+    integer
+    Required
+
+    The maximum number of items in the response (as set in the query or by default).
+    Example: 20
+    next
+    string
+    Required
+    Nullable
+
+    URL to the next page of items. ( null if none)
+    Example: "https://api.spotify.com/v1/me/shows?offset=1&limit=1"
+    offset
+    integer
+    Required
+
+    The offset of the items returned (as set in the query or by default)
+    Example: 0
+    previous
+    string
+    Required
+    Nullable
+
+    URL to the previous page of items. ( null if none)
+    Example: "https://api.spotify.com/v1/me/shows?offset=1&limit=1"
+    total
+    integer
+    Required
+
+    The total number of items available to return.
+    Example: 4
+
+Required
+
+    added_at
+    string [date-time]
+
+    The date and time the track or episode was added. Note: some very old playlists may return null in this field.
+
+The Spotify user who added the track or episode. Note: some very old playlists may return null in this field.
+is_local
+boolean
+
+Whether this track or episode is a local file or not.
+track
+oneOf
+
+Information about the track or episode.
+Will be one of the following:
+
+The album on which the track appears. The album object includes a link in href to full information about the album.
+
+The artists who performed the track. Each artist object includes a link in href to more detailed information about the artist.
+available_markets
+array of strings
+
+A list of the countries in which the track can be played, identified by their ISO 3166-1 alpha-2 code.
+disc_number
+integer
+
+The disc number (usually 1 unless the album consists of more than one disc).
+duration_ms
+integer
+
+The track length in milliseconds.
+explicit
+boolean
+
+Whether or not the track has explicit lyrics ( true = yes it does; false = no it does not OR unknown).
+
+Known external IDs for the track.
+
+    isrc
+    string
+
+    International Standard Recording Code
+    ean
+    string
+
+    International Article Number
+    upc
+    string
+
+    Universal Product Code
+
+Known external URLs for this track.
+href
+string
+
+A link to the Web API endpoint providing full details of the track.
+id
+string
+
+The Spotify ID for the track.
+is_playable
+boolean
+
+Part of the response when Track Relinking is applied. If true, the track is playable in the given market. Otherwise false.
+
+Part of the response when Track Relinking is applied, and the requested track has been replaced with different track. The track in the linked_from object contains information about the originally requested track.
+
+Included in the response when a content restriction is applied.
+name
+string
+
+The name of the track.
+popularity
+integer
+
+The popularity of the track. The value will be between 0 and 100, with 100 being the most popular.
+The popularity of a track is a value between 0 and 100, with 100 being the most popular. The popularity is calculated by algorithm and is based, in the most part, on the total number of plays the track has had and how recent those plays are.
+Generally speaking, songs that are being played a lot now will have a higher popularity than songs that were played a lot in the past. Duplicate tracks (e.g. the same track from a single and an album) are rated independently. Artist and album popularity is derived mathematically from track popularity. Note: the popularity value may lag actual popularity by a few days: the value is not updated in real time.
+preview_url
+string
+Nullable
+Deprecated
+
+A link to a 30 second preview (MP3 format) of the track. Can be null
+Important policy note
+
+    track_number
+    integer
+
+    The number of the track. If an album has several discs, the track number is the number on the specified disc.
+    type
+    string
+
+    The object type: "track".
+    Allowed values: "track"
+    uri
+    string
+
+    The Spotify URI for the track.
+    is_local
+    boolean
+
+    Whether or not the track is from a local file.
+
+    type
+    string
+
+    The object type: "playlist"
+    uri
+    string
+
+    The Spotify URI for the playlist.
+
+endpointhttps://api.spotify.com/v1/playlists/{playlist_id}playlist_idmarketfieldsadditional_types
+Response sample
+
+{  "collaborative": false,  "description": "string",  "external_urls": {    "spotify": "string"  },  "followers": {    "href": "string",    "total": 0  },  "href": "string",  "id": "string",  "images": [    {      "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",      "height": 300,      "width": 300    }  ],  "name": "string",  "owner": {    "external_urls": {      "spotify": "string"    },    "followers": {      "href": "string",      "total": 0    },    "href": "string",    "id": "string",    "type": "user",    "uri": "string",    "display_name": "string"  },  "public": false,  "snapshot_id": "string",  "tracks": {    "href": "https://api.spotify.com/v1/me/shows?offset=0&limit=20",    "limit": 20,    "next": "https://api.spotify.com/v1/me/shows?offset=1&limit=1",    "offset": 0,    "previous": "https://api.spotify.com/v1/me/shows?offset=1&limit=1",    "total": 4,    "items": [
+
+      {        "added_at": "string",        "added_by": {          "external_urls": {            "spotify": "string"          },          "followers": {            "href": "string",            "total": 0          },          "href": "string",          "id": "string",          "type": "user",          "uri": "string"        },        "is_local": false,        "track": {          "album": {            "album_type": "compilation",            "total_tracks": 9,            "available_markets": ["CA", "BR", "IT"],            "external_urls": {              "spotify": "string"            },            "href": "string",            "id": "2up3OPMp9Tb4dAKM2erWXQ",            "images": [              {                "url": "https://i.scdn.co/image/ab67616d00001e02ff9ca10b55ce82ae553c8228",                "height": 300,                "width": 300              }            ],            "name": "string",            "release_date": "1981-12",            "release_date_precision": "year",            "restrictions": {              "reason": "market"            },            "type": "album",            "uri": "spotify:album:2up3OPMp9Tb4dAKM2erWXQ",            "artists": [              {                "external_urls": {                  "spotify": "string"                },                "href": "string",                "id": "string",                "name": "string",                "type": "artist",                "uri": "string"              }            ]          },          "artists": [            {              "external_urls": {                "spotify": "string"              },              "href": "string",              "id": "string",              "name": "string",              "type": "artist",              "uri": "string"            }          ],          "available_markets": ["string"],          "disc_number": 0,          "duration_ms": 0,          "explicit": false,          "external_ids": {            "isrc": "string",            "ean": "string",            "upc": "string"          },          "external_urls": {            "spotify": "string"          },          "href": "string",          "id": "string",          "is_playable": false,          "linked_from": {          },          "restrictions": {            "reason": "string"          },          "name": "string",          "popularity": 0,          "preview_url": "string",          "track_number": 0,          "type": "track",          "uri": "string",          "is_local": false        }      }    ]  },  "type": "string",  "uri": "string"}
+
+Web API Reference | Spotify for Developers

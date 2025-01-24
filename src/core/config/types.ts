@@ -12,3 +12,11 @@ export interface SpotifyConfig {
         retryDelay: number;
     };
 }
+
+// Add this if not already present in the file
+export type ResourceType = 
+  'track' | 
+  'playlist' | 
+  'album' | 
+  'artist' |
+  'paged-playlists';  // Add the new resource type

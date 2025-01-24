@@ -28,6 +28,7 @@ class StructureScanner {
     private readonly includeExtensions = new Set([
         '.ts',
         '.tsx',
+        '.txt',
         '.js',
         '.jsx',
         '.json',
@@ -53,15 +54,23 @@ Please provide:
 2. Any specific code sections to focus on
 3. Particular areas where you need context
 
-I'll generate the input.csv and provide the consolidated code context!`;
+I'll generate the input.csv and provide the consolidated code context!
+
+please be conservative in your file selection as they may be rather large files and you aren't that good at pulling a ton into context yet`;
     }
 
     /**
      * Determines if a path should be excluded from scanning
      * @param pathToCheck - Path to evaluate
+     * @param isDirectory - Whether the path is a directory
      */
-    private shouldIgnore(pathToCheck: string): boolean {
-        return this.ignorePatterns.has(path.basename(pathToCheck));
+    private shouldIgnore(pathToCheck: string, isDirectory: boolean = false): boolean {
+        const basename = path.basename(pathToCheck);
+        // Never ignore the docs directory
+        if (isDirectory && basename === 'docs') {
+            return false;
+        }
+        return this.ignorePatterns.has(basename);
     }
 
     /**
@@ -81,43 +90,47 @@ I'll generate the input.csv and provide the consolidated code context!`;
             children: []
         };
 
-        const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-        
-        // Process files with enhanced path information
-        const files = entries
-            .filter(entry => 
-                entry.isFile() && 
-                this.includeExtensions.has(path.extname(entry.name)) &&
-                !this.shouldIgnore(entry.name)
-            )
-            .map(entry => {
-                const fullFilePath = path.join(dirPath, entry.name);
-                return {
-                    type: 'file' as const,
-                    name: entry.name,
-                    path: path.relative(relativeTo, fullFilePath),
-                    fullPath: fullFilePath
-                };
-            });
-
-        // Process directories recursively
-        const directories = entries
-            .filter(entry => 
-                entry.isDirectory() && 
-                !this.shouldIgnore(entry.name)
-            )
-            .map(entry => 
-                this.scanDirectory(
-                    path.join(dirPath, entry.name),
-                    relativeTo
+        try {
+            const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+            
+            // Process files with enhanced path information
+            const files = entries
+                .filter(entry => 
+                    entry.isFile() && 
+                    this.includeExtensions.has(path.extname(entry.name)) &&
+                    !this.shouldIgnore(entry.name)
                 )
-            );
+                .map(entry => {
+                    const fullFilePath = path.join(dirPath, entry.name);
+                    return {
+                        type: 'file' as const,
+                        name: entry.name,
+                        path: path.relative(relativeTo, fullFilePath),
+                        fullPath: fullFilePath
+                    };
+                });
 
-        // Combine and sort entries
-        node.children = [
-            ...directories.sort((a, b) => a.name.localeCompare(b.name)),
-            ...files.sort((a, b) => a.name.localeCompare(b.name))
-        ];
+            // Process directories recursively
+            const directories = entries
+                .filter(entry => 
+                    entry.isDirectory() && 
+                    !this.shouldIgnore(entry.name, true)  // Pass true for directories
+                )
+                .map(entry => 
+                    this.scanDirectory(
+                        path.join(dirPath, entry.name),
+                        relativeTo
+                    )
+                );
+
+            // Combine and sort entries
+            node.children = [
+                ...directories.sort((a, b) => a.name.localeCompare(b.name)),
+                ...files.sort((a, b) => a.name.localeCompare(b.name))
+            ];
+        } catch (error) {
+            console.error(`Error scanning directory ${dirPath}:`, error);
+        }
 
         return node;
     }

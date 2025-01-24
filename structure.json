@@ -6,6 +6,26 @@
   "children": [
     {
       "type": "directory",
+      "name": "docs",
+      "path": "docs",
+      "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\docs",
+      "children": [
+        {
+          "type": "file",
+          "name": "getPlaylist.txt",
+          "path": "docs\\getPlaylist.txt",
+          "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\docs\\getPlaylist.txt"
+        },
+        {
+          "type": "file",
+          "name": "getTrack.txt",
+          "path": "docs\\getTrack.txt",
+          "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\docs\\getTrack.txt"
+        }
+      ]
+    },
+    {
+      "type": "directory",
       "name": "scripts",
       "path": "scripts",
       "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\scripts",
@@ -91,6 +111,12 @@
               "name": "market.test.ts",
               "path": "src\\__tests__\\market.test.ts",
               "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\src\\__tests__\\market.test.ts"
+            },
+            {
+              "type": "file",
+              "name": "playlists.test.ts",
+              "path": "src\\__tests__\\playlists.test.ts",
+              "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\src\\__tests__\\playlists.test.ts"
             },
             {
               "type": "file",
@@ -232,13 +258,6 @@
           "children": [
             {
               "type": "directory",
-              "name": "albums",
-              "path": "src\\services\\albums",
-              "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\src\\services\\albums",
-              "children": []
-            },
-            {
-              "type": "directory",
               "name": "artists",
               "path": "src\\services\\artists",
               "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\src\\services\\artists",
@@ -248,6 +267,20 @@
                   "name": "index.ts",
                   "path": "src\\services\\artists\\index.ts",
                   "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\src\\services\\artists\\index.ts"
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "playlists",
+              "path": "src\\services\\playlists",
+              "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\src\\services\\playlists",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "playlist.service.ts",
+                  "path": "src\\services\\playlists\\playlist.service.ts",
+                  "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\src\\services\\playlists\\playlist.service.ts"
                 }
               ]
             },
@@ -305,6 +338,12 @@
                 },
                 {
                   "type": "file",
+                  "name": "playlist.ts",
+                  "path": "src\\types\\spotify\\playlist.ts",
+                  "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\src\\types\\spotify\\playlist.ts"
+                },
+                {
+                  "type": "file",
                   "name": "track.service.ts",
                   "path": "src\\types\\spotify\\track.service.ts",
                   "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\src\\types\\spotify\\track.service.ts"
@@ -335,18 +374,6 @@
     },
     {
       "type": "file",
-      "name": "codebase-snapshot.json",
-      "path": "codebase-snapshot.json",
-      "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\codebase-snapshot.json"
-    },
-    {
-      "type": "file",
-      "name": "gatherStruct.ts",
-      "path": "gatherStruct.ts",
-      "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\gatherStruct.ts"
-    },
-    {
-      "type": "file",
       "name": "jest.config.js",
       "path": "jest.config.js",
       "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\jest.config.js"
@@ -359,9 +386,21 @@
     },
     {
       "type": "file",
+      "name": "paste.txt",
+      "path": "paste.txt",
+      "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\paste.txt"
+    },
+    {
+      "type": "file",
       "name": "structure.json",
       "path": "structure.json",
       "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\structure.json"
+    },
+    {
+      "type": "file",
+      "name": "structure.txt",
+      "path": "structure.txt",
+      "fullPath": "C:\\Users\\filiu\\github\\emailLLM\\spotify-api-testing\\structure.txt"
     },
     {
       "type": "file",

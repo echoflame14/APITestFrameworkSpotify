@@ -3,207 +3,172 @@ import axios, {
     AxiosInstance, 
     AxiosError, 
     AxiosRequestConfig,
-    InternalAxiosRequestConfig 
+    InternalAxiosRequestConfig,
+    AxiosHeaders // Add this import
 } from 'axios';
 import { Logger } from '../logging/types';
 import { HttpClientConfig } from './types';
 import { 
     SpotifyHttpError,
     SpotifyRateLimitError,
-    isSpotifyErrorResponse 
+    isSpotifyErrorResponse,
+    SpotifyErrorData
 } from './errors';
 
-/**
- * HttpClient provides a robust wrapper around Axios for making HTTP requests to the Spotify API.
- * It includes automatic retry logic, error transformation, and comprehensive logging.
- */
 export class HttpClient {
     private client: AxiosInstance;
     private readonly config: Required<HttpClientConfig>;
     private readonly logger: Logger;
 
     constructor(config: HttpClientConfig, logger: Logger) {
-        // Ensure all config values have sensible defaults
         this.config = {
             ...config,
-            timeout: config.timeout ?? 10000,      // 10 second default timeout
-            retries: config.retries ?? 3,          // 3 default retries
-            retryDelay: config.retryDelay ?? 1000  // 1 second default retry delay
+            timeout: config.timeout ?? 10000,
+            retries: config.retries ?? 3,
+            retryDelay: config.retryDelay ?? 1000
         };
         this.logger = logger;
         
-        // Initialize Axios with base configuration
+        // In the axios.create() configuration
         this.client = axios.create({
             baseURL: this.config.baseURL,
             timeout: this.config.timeout,
-            headers: { 'Content-Type': 'application/json' }
+            headers: new AxiosHeaders({ 'Content-Type': 'application/json' })
         });
 
         this.setupInterceptors();
     }
 
-    /**
-     * Configures request and response interceptors for logging and error handling
-     */
     private setupInterceptors(): void {
-        // Request interceptor for logging and error transformation
         this.client.interceptors.request.use(
             (config) => {
                 const method = config.method?.toUpperCase() ?? 'GET';
                 const url = config.url ?? 'unknown';
-                this.logger.info(`Making ${method} request to ${url}`, {
-                    method,
-                    url,
-                    headers: this.sanitizeHeaders(config.headers)
-                });
+                this.logger.info(`Initiating ${method} ${url}`);
                 return config;
             },
             (error) => {
-                this.logger.error('Request interceptor error:', this.sanitizeError(error));
+                this.logger.error('Request setup failed:', this.sanitizeError(error));
                 return Promise.reject(this.transformError(error as AxiosError));
             }
         );
 
-        // Response interceptor for logging and automatic retry logic
         this.client.interceptors.response.use(
             (response) => {
-                const url = response.config.url ?? 'unknown';
-                this.logger.info(`Received response from ${url} with status ${response.status}`, {
-                    status: response.status,
-                    url,
-                    headers: this.sanitizeHeaders(response.headers)
-                });
+                this.logger.info(`Received ${response.status} from ${response.config.url}`);
                 return response;
             },
-            async (error) => {
-                return this.handleRequestError(error as AxiosError);
-            }
+            async (error) => this.handleRequestError(error as AxiosError)
         );
     }
 
-    /**
-     * Transforms Axios errors into our custom SpotifyHttpError format
-     */
     private transformError(error: AxiosError): SpotifyHttpError {
-        if (error.response?.data) {
-            const data = error.response.data;
-            if (isSpotifyErrorResponse(data)) {
-                // Special handling for rate limiting
-                if (error.response.status === 429) {
-                    const retryAfter = parseInt(error.response.headers['retry-after'] || '0', 10);
-                    return new SpotifyRateLimitError(
-                        data.error?.message || 'Rate limit exceeded',
-                        retryAfter
-                    );
-                }
+        const errorData: SpotifyErrorData = {
+            originalError: error,
+            originalStatus: error.response?.status
+        };
 
+        if (error.response) {
+            const { status, headers, data } = error.response;
+            
+            if (status === 429) {
+                const retryAfter = this.parseRetryAfter(headers);
+                return new SpotifyRateLimitError(
+                    'API rate limit exceeded',
+                    retryAfter,
+                    {
+                        ...errorData,
+                        retryAfter,
+                        contextData: {
+                            retryAfterSeconds: retryAfter,
+                            rateLimitLimit: headers['x-ratelimit-limit'],
+                            rateLimitRemaining: headers['x-ratelimit-remaining']
+                        }
+                    }
+                );
+            }
+
+            if (isSpotifyErrorResponse(data) && data.error) {
                 return new SpotifyHttpError(
-                    data.error?.message || error.message,
-                    error.response.status,
-                    data.error?.code,
-                    data
+                    data.error.message,
+                    status,
+                    data.error.code,
+                    { ...errorData, error: data.error }
                 );
             }
         }
 
-        // Handle network errors (no response received)
+        return this.createGenericError(error, errorData);
+    }
+
+    private parseRetryAfter(headers: Record<string, any>): number {
+        const retryValue = headers?.['retry-after'] || '0';
+        return Math.max(parseInt(retryValue, 10) * 1000, 0);
+    }
+
+    private createGenericError(error: AxiosError, data: SpotifyErrorData): SpotifyHttpError {
         if (error.request) {
             return new SpotifyHttpError(
-                'Network error occurred',
+                'Network connection failed',
                 undefined,
                 'NETWORK_ERROR',
-                error.message
+                { ...data, contextData: { code: 'NETWORK_ERROR' } }
             );
         }
 
-        // Handle client-side errors (request never sent)
         return new SpotifyHttpError(
-            'Request failed',
+            'Request processing failed',
             undefined,
             'CLIENT_ERROR',
-            error.message
+            { ...data, contextData: { code: 'CLIENT_ERROR' } }
         );
     }
 
-    /**
-     * Implements retry logic with exponential backoff for failed requests
-     */
     private async handleRequestError(error: AxiosError): Promise<never> {
-        const config = error.config as InternalAxiosRequestConfig | undefined;
-        if (!config) {
-            throw this.transformError(error);
-        }
-
-        const retryCount = (config as any).__retryCount || 0;
-        const shouldRetry = this.shouldRetryRequest(error, retryCount);
-
-        if (shouldRetry) {
-            (config as any).__retryCount = retryCount + 1;
-            this.logger.warn(`Retrying request (${retryCount + 1}/${this.config.retries})`, {
-                attempt: retryCount + 1,
-                maxRetries: this.config.retries,
-                url: config.url
-            });
+        const config = error.config as InternalAxiosRequestConfig & { __retryCount?: number };
+        const retryCount = config?.__retryCount || 0;
+        
+        if (this.shouldRetry(error, retryCount)) {
+            config.__retryCount = retryCount + 1;
+            const delay = this.calculateBackoff(retryCount);
             
-            const backoffDelay = this.calculateBackoff(retryCount);
-            await new Promise(resolve => setTimeout(resolve, backoffDelay));
+            this.logger.warn(`Retrying request (${config.__retryCount}/${this.config.retries})`, {
+                url: config.url,
+                delay,
+                status: error.response?.status
+            });
+
+            await new Promise(resolve => setTimeout(resolve, delay));
             return this.client.request(config);
         }
 
         throw this.transformError(error);
     }
 
-    /**
-     * Determines if a failed request should be retried based on error type and retry count
-     */
-    private shouldRetryRequest(error: AxiosError, retryCount: number): boolean {
-        if (retryCount >= this.config.retries) return false;
-        if (!error.response) return true; // Always retry network errors
-        return error.response.status >= 500 || error.response.status === 429;
+    private shouldRetry(error: AxiosError, retryCount: number): boolean {
+        return retryCount < this.config.retries && 
+            (!error.response || error.response.status === 429 || error.response.status >= 500);
     }
 
-    /**
-     * Calculates retry delay using exponential backoff with jitter
-     */
     private calculateBackoff(retryCount: number): number {
-        const baseDelay = this.config.retryDelay;
-        const exponentialDelay = baseDelay * Math.pow(2, retryCount);
-        const jitter = Math.random() * baseDelay;
-        // Cap at 10 seconds to prevent excessive delays
-        return Math.min(exponentialDelay + jitter, 10000);
+        const base = this.config.retryDelay;
+        const maxDelay = 30000;
+        const delay = base * Math.pow(2, retryCount) + Math.random() * base;
+        return Math.min(delay, maxDelay);
     }
 
-    /**
-     * Sanitizes error objects for safe logging
-     */
     private sanitizeError(error: unknown): unknown {
-        if (error instanceof Error) {
-            const sanitized = {
+        if (error instanceof AxiosError) {
+            return {
                 message: error.message,
-                name: error.name,
-                stack: error.stack
+                code: error.code,
+                url: error.config?.url,
+                method: error.config?.method,
+                status: error.response?.status
             };
-            
-            if (error instanceof AxiosError) {
-                const data = error.response?.data;
-                return {
-                    ...sanitized,
-                    status: error.response?.status,
-                    data: isSpotifyErrorResponse(data) ? data : undefined,
-                    config: {
-                        url: error.config?.url,
-                        method: error.config?.method,
-                        baseURL: error.config?.baseURL
-                    }
-                };
-            }
-            
-            return sanitized;
         }
-        
         return error;
     }
-
     /**
      * Removes sensitive information from headers before logging
      */

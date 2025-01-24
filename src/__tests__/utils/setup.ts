@@ -1,9 +1,12 @@
 // src/__tests__/utils/setup.ts
 import { TrackService } from '../../services/tracks/track.service';
+import { PlaylistService } from '../../services/playlists/playlist.service';
 import { HttpClient } from '../../core/http/client';
 import { AuthHandler } from '../../core/auth/handler';
 import { ConsoleLogger } from '../../core/logging/console-logger';
 import { AuthConfig } from '../../core/auth/types';
+import { ServiceDependencies } from '../../services/base.service';
+
 import dotenv from 'dotenv';
 
 // Load environment variables once
@@ -11,11 +14,14 @@ dotenv.config();
 
 export interface TestContext {
     trackService: TrackService;
+    playlistService: PlaylistService;
     httpClient: HttpClient;
     authHandler: AuthHandler;
-}
+    logger: ConsoleLogger;
+  }
+  
 
-export const setupTestContext = async (): Promise<TestContext> => {
+  export async function setupTestContext(): Promise<TestContext> {
     const logger = new ConsoleLogger();
 
     // Load configuration with defaults
@@ -40,5 +46,18 @@ export const setupTestContext = async (): Promise<TestContext> => {
     // Initialize track service
     const trackService = new TrackService({ http: httpClient, auth: authHandler });
 
-    return { trackService, httpClient, authHandler };
+      
+    const deps = {
+        http: httpClient,
+        auth: authHandler
+    };
+    
+      return {
+        trackService: new TrackService(deps),
+        playlistService: new PlaylistService(deps),
+        httpClient,
+        authHandler,
+        logger
+      };
+
 };
