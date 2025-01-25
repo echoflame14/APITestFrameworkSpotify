@@ -39,12 +39,29 @@ class DiffCapturer {
         try {
             const diffOutput = this.executeGitDiff(target);
             
-            // Add timestamp and command info
-            const header = `# Generated: ${new Date().toISOString()}\n` +
-                         `# Command: git diff ${target || 'HEAD'}\n\n`;
+            const commitPrompt = `#!/bin/bash
+# Auto-generated commit command builder | paste into terminal
+# INSTRUCTIONS:
+# 1. AI should generate a single -m argument for semantic commits
+# 2. Format: "type(scope): brief summary"
+# 3. Use bullet points for detailed changes
+# 4. Escape quotes with \\"
+
+echo "Generated commit command:"
+echo "git commit -m \\"
+`;
+
+            const header = `# DIFF CONTENT BELOW - ${new Date().toISOString()}\n` +
+                         `# git diff ${target || 'HEAD'}\n\n` +
+                         `cat << 'EOF'\n`;
             
-            fs.writeFileSync(this.outputFile, header + diffOutput, 'utf-8');
-            console.log(`✅ Diff output saved to ${this.outputFile}`);
+            const footer = `EOF\n`;
+            
+            fs.writeFileSync(this.outputFile, 
+                commitPrompt + header + diffOutput + footer, 
+                { mode: 0o755, encoding: 'utf-8' }
+            );
+            console.log(`✅ Generated paste-ready file: ${this.outputFile}`);
             
         } catch (error) {
             console.error('❌ Error capturing diff:');
@@ -54,7 +71,6 @@ class DiffCapturer {
     }
 }
 
-// CLI Execution remains the same
 if (require.main === module) {
     const args = process.argv.slice(2);
     const target = args[0];
