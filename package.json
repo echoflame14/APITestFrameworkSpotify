@@ -12,7 +12,10 @@
     "debug:auth": "ts-node src/debug-auth.ts",
     "capture": "ts-node scripts/captureCodebase.ts",
     "capture:verbose": "ts-node scripts/captureCodebase.ts --verbose",
-    "structure": "ts-node scripts/getStructure.ts"
+    "structure": "ts-node scripts/getStructure.ts",
+    "diff": "ts-node scripts/diff.ts",
+    "diff:verbose": "ts-node scripts/diff.ts --verbose",
+    "diff:compare": "ts-node scripts/diff.ts origin/main"
   },
   "keywords": [
     "spotify",
