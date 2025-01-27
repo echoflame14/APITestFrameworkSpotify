@@ -1,0 +1,212 @@
+Here’s a **focused plan for expanding error functionality** to improve testability and make it easier to build out new tests:
+
+---
+
+### **1. Error Normalization & Standardization**
+- **Goal**: Create a consistent error format for easier testing and debugging.  
+- **Tasks**:  
+  - Implement `normalizeSpotifyError` to standardize error structure:  
+    ```typescript
+    interface NormalizedError {
+      code: string; // Standardized error code (e.g., "RATE_LIMIT", "VALIDATION_ERROR")
+      message: string; // User-friendly message
+      statusCode: number; // HTTP status code
+      context: BaseErrorContext; // Additional context (e.g., resourceType, resourceId)
+      isRetryable: boolean; // Whether the error is retryable
+      timestamp: string; // When the error occurred
+    }
+    ```
+  - Add an error code standardization table:  
+    ```typescript
+    const ERROR_CODES = {
+      RATE_LIMIT: 'RATE_LIMIT',
+      VALIDATION_ERROR: 'VALIDATION_ERROR',
+      NETWORK_ERROR: 'NETWORK_ERROR',
+      // Add more as needed
+    };
+    ```
+  - Ensure all errors pass through the normalization pipeline before being thrown.  
+
+---
+
+### **2. Error Context Expansion**
+- **Goal**: Enrich error contexts to make debugging and testing easier.  
+- **Tasks**:  
+  - Add request-specific metadata to error contexts:  
+    ```typescript
+    interface RequestContext {
+      endpoint: string;
+      method: string;
+      params?: Record<string, unknown>;
+      headers?: Record<string, string>;
+    }
+    ```
+  - Include user-friendly messages for common scenarios:  
+    ```typescript
+    const ERROR_MESSAGES = {
+      RATE_LIMIT: 'Too many requests. Please try again later.',
+      VALIDATION_ERROR: 'Invalid data provided. Please check your input.',
+      // Add more as needed
+    };
+    ```
+  - Add a `timestamp` to all errors for tracking when they occurred.  
+
+---
+
+### **3. Error Type Registry**
+- **Goal**: Create a centralized registry for error types and metadata.  
+- **Tasks**:  
+  - Define a registry structure:  
+    ```typescript
+    interface ErrorTypeMetadata {
+      code: string;
+      isRetryable: boolean;
+      defaultMessage: string;
+      severity: 'low' | 'medium' | 'high';
+    }
+    ```
+  - Populate the registry with common error types:  
+    ```typescript
+    const ERROR_REGISTRY: Record<string, ErrorTypeMetadata> = {
+      RATE_LIMIT: {
+        code: 'RATE_LIMIT',
+        isRetryable: true,
+        defaultMessage: 'Too many requests. Please try again later.',
+        severity: 'medium',
+      },
+      VALIDATION_ERROR: {
+        code: 'VALIDATION_ERROR',
+        isRetryable: false,
+        defaultMessage: 'Invalid data provided. Please check your input.',
+        severity: 'high',
+      },
+      // Add more as needed
+    };
+    ```
+  - Use the registry to enforce consistency across error creation.  
+
+---
+
+### **4. Test Utilities for Errors**
+- **Goal**: Build utilities to simplify error testing.  
+- **Tasks**:  
+  - Create a `TestErrorFactory` for generating mock errors:  
+    ```typescript
+    class TestErrorFactory {
+      static createRateLimitError(): SpotifyRateLimitError {
+        return new SpotifyRateLimitError('Rate limit exceeded', 60, {
+          retryAfter: 60,
+          contextData: { endpoint: '/v1/tracks' },
+        });
+      }
+
+      static createValidationError(): SpotifyValidationError {
+        return new SpotifyValidationError('Invalid input', {
+          missingFields: ['trackId'],
+          invalidTypes: ['duration_ms'],
+        });
+      }
+      // Add more factory methods as needed
+    }
+    ```
+  - Add assertion helpers for error testing:  
+    ```typescript
+    function assertIsRateLimitError(error: unknown): void {
+      if (!(error instanceof SpotifyRateLimitError)) {
+        throw new Error('Expected a rate limit error');
+      }
+    }
+
+    function assertErrorContext(error: unknown, context: BaseErrorContext): void {
+      if (!(error instanceof SpotifyHttpError)) {
+        throw new Error('Expected a SpotifyHttpError');
+      }
+      expect(error.getContextData()).toMatchObject(context);
+    }
+    ```
+  - Add utilities for simulating network failures:  
+    ```typescript
+    function simulateNetworkError(): Promise<never> {
+      return Promise.reject(new Error('Network connection failed'));
+    }
+
+    function simulateRateLimitError(): Promise<never> {
+      return Promise.reject(TestErrorFactory.createRateLimitError());
+    }
+    ```
+
+---
+
+### **5. Enhanced Error Logging**
+- **Goal**: Improve error logging for better debugging and test verification.  
+- **Tasks**:  
+  - Add structured logging for errors:  
+    ```typescript
+    interface StructuredErrorLog {
+      code: string;
+      message: string;
+      statusCode: number;
+      context: BaseErrorContext;
+      stack?: string;
+      timestamp: string;
+    }
+    ```
+  - Include request/response details in logs:  
+    ```typescript
+    function logError(error: SpotifyHttpError, requestContext: RequestContext): void {
+      const logEntry: StructuredErrorLog = {
+        code: error.code,
+        message: error.message,
+        statusCode: error.statusCode || 500,
+        context: error.getContextData() || {},
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+      };
+      logger.error('API request failed', { error: logEntry, requestContext });
+    }
+    ```
+
+---
+
+### **6. Documentation for Testers**
+- **Goal**: Provide clear guidance for writing error-related tests.  
+- **Tasks**:  
+  - Document error normalization and context enrichment:  
+    ```markdown
+    ## Error Handling Guide
+
+    ### Normalized Errors
+    All errors are normalized to the following structure:
+    ```typescript
+    interface NormalizedError {
+      code: string;
+      message: string;
+      statusCode: number;
+      context: BaseErrorContext;
+      isRetryable: boolean;
+      timestamp: string;
+    }
+    ```
+    ```
+  - Add examples for testing common error scenarios:  
+    ```markdown
+    ### Testing Rate Limit Errors
+    ```typescript
+    it('should handle rate limit errors', async () => {
+      const error = TestErrorFactory.createRateLimitError();
+      await expect(service.makeRequest()).rejects.toThrow(error);
+      assertIsRateLimitError(error);
+    });
+    ```
+    ```
+
+---
+
+### **Implementation Plan**
+1. **Phase 1**: Implement error normalization and context expansion.  
+2. **Phase 2**: Build the error type registry and test utilities.  
+3. **Phase 3**: Enhance error logging and documentation.  
+
+---
+
+This plan focuses on making errors more consistent, testable, and debuggable while providing tools to simplify testing. Let me know if you'd like to adjust priorities or dive deeper into any specific area!

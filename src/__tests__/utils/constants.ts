@@ -5,7 +5,12 @@ export const TRACK_IDS = {
     SINGLE_TRACK: '6rqhFgbbKwnb9MLmUQDhG6',      // Example: "Easy On Me" (Single) - Adele
     GEO_RESTRICTED: '2S5ogg0l3YdV3AEWYIwl8k',    // Hypothetical geo-restricted track (Japan)
     NON_EXISTENT: 'nonexistentid12345',
-};
+} as const;
+
+export const PLAYLIST_IDS = {
+    TOP_50_GLOBAL: '37i9dQZF1DXcBWIGoYBM5M',     // Example: Spotify's Top 50 Global
+    CUSTOM_PLAYLIST: '3pha0pIRZTxuItzaeC2bRf',    // Your custom playlist
+} as const;
 
 export const MARKETS = {
     US: 'US',
@@ -21,9 +26,9 @@ export const TEST_TIMEOUTS = {
     NETWORK: 15000
 } as const;
 
-
-// Type for track IDs to ensure type safety
+// Type for IDs to ensure type safety
 export type TrackId = keyof typeof TRACK_IDS;
+export type PlaylistId = keyof typeof PLAYLIST_IDS;
 export type Market = keyof typeof MARKETS;
 export type TimeoutType = keyof typeof TEST_TIMEOUTS;
 
