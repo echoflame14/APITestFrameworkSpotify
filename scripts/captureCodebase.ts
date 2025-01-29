@@ -38,6 +38,14 @@ class CodebaseCapture {
     constructor(private readonly csvPath: string = 'input.csv') {}
 
     private parsePatternInput(content: string): IncludePattern[] {
+        if (!content.trim()) {
+            // If no patterns provided, include everything
+            return [{
+                pattern: '**/*',
+                isRegex: false
+            }];
+        }
+
         return content
             .split('\n')
             .map(line => line.trim())
@@ -53,6 +61,16 @@ class CodebaseCapture {
 
     private loadPatterns(): void {
         try {
+            // If the CSV file doesn't exist, include everything
+            if (!fs.existsSync(this.csvPath)) {
+                console.log('No patterns file found, including all files by default');
+                this.includePatterns = [{
+                    pattern: '**/*',
+                    isRegex: false
+                }];
+                return;
+            }
+
             const content = fs.readFileSync(this.csvPath, 'utf-8');
             this.includePatterns = this.parsePatternInput(content);
             
@@ -62,7 +80,11 @@ class CodebaseCapture {
             });
         } catch (error) {
             console.error(`Error reading patterns file: ${this.csvPath}`);
-            process.exit(1);
+            console.error('Including all files by default');
+            this.includePatterns = [{
+                pattern: '**/*',
+                isRegex: false
+            }];
         }
     }
 
@@ -74,6 +96,7 @@ class CodebaseCapture {
             return false;
         }
 
+        // If no patterns are specified, include everything except ignored files
         if (this.includePatterns.length === 0) {
             return true;
         }
@@ -88,46 +111,62 @@ class CodebaseCapture {
                     return false;
                 }
             } else {
-                const simplePattern = pattern.pattern
+                // Convert glob pattern to regex
+                const globToRegex = pattern.pattern
                     .replace(/\./g, '\\.')
-                    .replace(/\*/g, '.*');
-                const regex = new RegExp(`^${simplePattern}$`);
+                    .replace(/\*\*/g, '.*')
+                    .replace(/\*/g, '[^/]*');
+                const regex = new RegExp(globToRegex);
                 return regex.test(relativePath);
             }
         });
     }
 
     private readFileContent(filepath: string): string {
-        return fs.readFileSync(filepath, { encoding: 'utf-8' });
+        try {
+            return fs.readFileSync(filepath, { encoding: 'utf-8' });
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+            console.warn(`Error reading file ${filepath}: ${errorMessage}`);
+            return '';
+        }
     }
 
     private scanDirectory(currentPath: string): DirectoryStructure {
         const structure: DirectoryStructure = {};
-        const entries = fs.readdirSync(currentPath, { withFileTypes: true });
-
-        const files = entries
-            .filter(entry => entry.isFile() && this.shouldCapture(path.join(currentPath, entry.name)));
         
-        if (files.length > 0) {
-            structure.files = files.map(file => ({
-                path: path.join(currentPath, file.name).replace(/\\/g, '/'),
-                content: this.readFileContent(path.join(currentPath, file.name))
-            }));
-        }
+        try {
+            const entries = fs.readdirSync(currentPath, { withFileTypes: true });
 
-        const directories = entries.filter(entry => 
-            entry.isDirectory() && !this.ignorePatterns.has(entry.name)
-        );
-        
-        if (directories.length > 0) {
-            structure.dirs = {};
-            for (const dir of directories) {
-                const fullPath = path.join(currentPath, dir.name);
-                const subStructure = this.scanDirectory(fullPath);
-                if (Object.keys(subStructure).length > 0) {
-                    structure.dirs[dir.name] = subStructure;
+            const files = entries
+                .filter(entry => entry.isFile())
+                .filter(entry => this.shouldCapture(path.join(currentPath, entry.name)))
+                .map(file => ({
+                    path: path.relative(this.rootDir, path.join(currentPath, file.name)).replace(/\\/g, '/'),
+                    content: this.readFileContent(path.join(currentPath, file.name))
+                }))
+                .filter(file => file.content !== ''); // Remove empty files
+
+            if (files.length > 0) {
+                structure.files = files;
+            }
+
+            const directories = entries
+                .filter(entry => entry.isDirectory() && !this.ignorePatterns.has(entry.name));
+            
+            if (directories.length > 0) {
+                structure.dirs = {};
+                for (const dir of directories) {
+                    const fullPath = path.join(currentPath, dir.name);
+                    const subStructure = this.scanDirectory(fullPath);
+                    if (Object.keys(subStructure).length > 0) {
+                        structure.dirs[dir.name] = subStructure;
+                    }
                 }
             }
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+            console.error(`Error scanning directory ${currentPath}: ${errorMessage}`);
         }
 
         return structure;
@@ -144,7 +183,7 @@ class CodebaseCapture {
         };
 
         const processDirs = (dirs: Record<string, DirectoryStructure>) => {
-            for (const [dirName, dirStructure] of Object.entries(dirs)) {
+            for (const [, dirStructure] of Object.entries(dirs)) {
                 if (dirStructure.files) {
                     processFiles(dirStructure.files);
                 }
@@ -174,6 +213,11 @@ class CodebaseCapture {
         const structure = this.scanDirectory(rootDir);
         const output = this.formatOutput(structure);
         
+        if (!output) {
+            console.error('No files were captured! Check your patterns and paths.');
+            return;
+        }
+
         fs.writeFileSync('paste.txt', output, { encoding: 'utf-8' });
         console.log('Codebase capture complete!');
         console.log('Output saved to: paste.txt');
