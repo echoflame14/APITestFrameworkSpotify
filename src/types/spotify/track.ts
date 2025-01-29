@@ -1,80 +1,194 @@
+/**
+ * @fileoverview Comprehensive type definitions for Spotify Track-related entities
+ * Includes interfaces for tracks, albums, artists, and related metadata
+ */
 
-// src/types/spotify/track.ts
 import { ExternalUrls, Image, Restrictions } from './common';
 
-// External IDs interface
-export interface ExternalIds {
-    isrc?: string;  // International Standard Recording Code
-    ean?: string;   // International Article Number
-    upc?: string;   // Universal Product Code
+/**
+ * Represents various external identification systems for tracks
+ */
+export interface ExternalIds extends Record<string, string | undefined> {
+    readonly isrc?: string;  // International Standard Recording Code
+    readonly ean?: string;   // International Article Number
+    readonly upc?: string;   // Universal Product Code
 }
 
-// Linked Track interface for track relinking
+/**
+ * Represents track restrictions by market or other factors
+ */
+export type RestrictionReason = 'market' | 'product' | 'explicit';
+
+export interface RestrictionInfo {
+    readonly reason: RestrictionReason;
+}
+
+/**
+ * Represents a linked track for territory-specific track relinking
+ */
 export interface LinkedTrack {
-    external_urls: ExternalUrls;
-    href: string;
-    id: string;
-    type: 'track';
-    uri: string;
+    readonly external_urls: ExternalUrls;
+    readonly href: string;
+    readonly id: string;
+    readonly type: 'track';
+    readonly uri: string;
 }
 
-// Artist interface
+/**
+ * Represents an artist with essential metadata
+ */
 export interface Artist {
-    external_urls: ExternalUrls;
-    href: string;
-    id: string;
-    name: string;
-    type: 'artist';
-    uri: string;
+    readonly external_urls: ExternalUrls;
+    readonly href: string;
+    readonly id: string;
+    readonly name: string;
+    readonly type: 'artist';
+    readonly uri: string;
 }
 
-// Album interface
+/**
+ * Valid album types in the Spotify API
+ */
+export type AlbumType = 'album' | 'single' | 'compilation';
+
+/**
+ * Release date precision levels
+ */
+export type ReleaseDatePrecision = 'year' | 'month' | 'day';
+
+/**
+ * Represents an album with comprehensive metadata
+ */
 export interface Album {
-    album_type: 'album' | 'single' | 'compilation';
-    total_tracks: number;
-    available_markets: string[];
-    external_urls: ExternalUrls;
-    href: string;
-    id: string;
-    images: Image[];
-    name: string;
-    release_date: string;
-    release_date_precision: 'year' | 'month' | 'day';
-    restrictions?: {
-        reason: 'market' | 'product' | 'explicit';
-    };
-    type: 'album';
-    uri: string;
-    artists: Artist[];
+    readonly album_type: AlbumType;
+    readonly total_tracks: number;
+    readonly available_markets: readonly string[];
+    readonly external_urls: ExternalUrls;
+    readonly href: string;
+    readonly id: string;
+    readonly images: readonly Image[];
+    readonly name: string;
+    readonly release_date: string;
+    readonly release_date_precision: ReleaseDatePrecision;
+    readonly restrictions?: Readonly<RestrictionInfo>;
+    readonly type: 'album';
+    readonly uri: string;
+    readonly artists: readonly Artist[];
 }
 
-// Main Track interface
+/**
+ * Comprehensive interface for Spotify track objects
+ */
 export interface Track {
-    album: Album;
-    artists: Artist[];
-    available_markets?: string[];
-    disc_number: number;
-    duration_ms: number;
-    explicit: boolean;
-    external_ids: ExternalIds;
-    external_urls: ExternalUrls;
-    href: string;
-    id: string;
-    is_playable?: boolean;
-    linked_from?: LinkedTrack;
-    restrictions?: {
-        reason: 'market' | 'product' | 'explicit';
-    };
-    name: string;
-    popularity: number;
-    preview_url: string | null;
-    track_number: number;
-    type: 'track';
-    uri: string;
-    is_local: boolean;
+    readonly album: Album;
+    readonly artists: readonly Artist[];
+    readonly available_markets?: readonly string[];
+    readonly disc_number: number;
+    readonly duration_ms: number;
+    readonly explicit: boolean;
+    readonly external_ids: ExternalIds;
+    readonly external_urls: ExternalUrls;
+    readonly href: string;
+    readonly id: string;
+    readonly is_playable?: boolean;
+    readonly linked_from?: LinkedTrack;
+    readonly restrictions?: Readonly<RestrictionInfo>;
+    readonly name: string;
+    readonly popularity: number;
+    readonly preview_url: string | null;
+    readonly track_number: number;
+    readonly type: 'track';
+    readonly uri: string;
+    readonly is_local: boolean;
 }
 
-// Optional parameters for track requests
+/**
+ * Parameters for track-related API requests
+ */
 export interface TrackRequestParams {
-    market?: string;  // ISO 3166-1 alpha-2 country code
+    readonly market?: string;  // ISO 3166-1 alpha-2 country code
+}
+
+/**
+ * Validation interface for essential track properties
+ */
+export interface TrackValidation {
+    readonly is_playable: boolean;
+    readonly linked_from?: LinkedTrack;
+    readonly duration_ms: number;
+    readonly artists: readonly Artist[];
+}
+
+/**
+ * Type guard to validate Track objects
+ * @param response - Unknown response object to validate
+ * @returns Type predicate indicating if response is a valid Track
+ */
+export function isValidTrack(response: unknown): response is Track {
+    if (!response || typeof response !== 'object') return false;
+    
+    const track = response as Track;
+    
+    // Essential property checks
+    const hasRequiredProps = !!(
+        track.id &&
+        track.name &&
+        track.duration_ms > 0 &&
+        Array.isArray(track.artists) &&
+        track.artists.length > 0 &&
+        track.type === 'track' &&
+        track.album &&
+        track.uri
+    );
+
+    if (!hasRequiredProps) return false;
+
+    // Validate nested artist objects
+    const hasValidArtists = track.artists.every(artist => 
+        artist &&
+        typeof artist === 'object' &&
+        artist.id &&
+        artist.name &&
+        artist.type === 'artist'
+    );
+
+    // Validate album object
+    const hasValidAlbum = !!(
+        track.album.id &&
+        track.album.name &&
+        track.album.type === 'album' &&
+        Array.isArray(track.album.images)
+    );
+
+    return hasValidArtists && hasValidAlbum;
+}
+
+/**
+ * Custom error for track validation failures
+ */
+export class TrackValidationError extends Error {
+    constructor(
+        public readonly trackId: string,
+        public readonly validationErrors: readonly string[],
+        public readonly originalData?: unknown
+    ) {
+        super(`Track validation failed for ${trackId}: ${validationErrors.join(', ')}`);
+        this.name = 'TrackValidationError';
+        Object.setPrototypeOf(this, TrackValidationError.prototype);
+    }
+}
+
+/**
+ * Helper to extract essential track data for display
+ * @param track - Valid track object
+ * @returns Simplified track information
+ */
+export function getTrackSummary(track: Track) {
+    return {
+        id: track.id,
+        name: track.name,
+        artists: track.artists.map(a => a.name),
+        duration: track.duration_ms,
+        albumName: track.album.name
+    };
 }

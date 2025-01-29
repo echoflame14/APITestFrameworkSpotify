@@ -3,7 +3,7 @@
 import { BaseService, ServiceDependencies } from '../base.service';
 import { Track, TrackRequestParams } from '../../types/spotify/track';
 import { SpotifyHttpError } from '../../core/http/errors';
-
+import { ERROR_CODES } from '../../core/http/errors/types'
 /**
  * Service for interacting with Spotify's Track API endpoints
  * @class TrackService
@@ -69,19 +69,19 @@ export class TrackService extends BaseService {
      */
     private async prepareRequestParams(market?: string): Promise<TrackRequestParams> {
         const params: TrackRequestParams = {};
-
+    
         if (market) {
             if (!this.isValidMarketCode(market)) {
                 throw new SpotifyHttpError(
                     'Invalid market code provided',
                     400,
-                    'INVALID_MARKET',
+                    ERROR_CODES.INVALID_MARKET,
                     { market }
                 );
             }
-            params.market = market;
+            return { ...params, market };
         }
-
+    
         return params;
     }
 }
