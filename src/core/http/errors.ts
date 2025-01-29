@@ -6,7 +6,6 @@ import type {
     ErrorCode
 } from './errors/types';
 
-// Use imported ERROR_CODES and ERROR_REGISTRY from types instead of redefining
 import { ERROR_CODES, ERROR_REGISTRY } from './errors/types';
 
 export interface SpotifyErrorResponse {
@@ -128,13 +127,20 @@ export class SpotifyHttpError extends Error {
 
     toNormalizedError(): NormalizedError {
         const metadata = this.getMetadata();
+        const now = new Date().toISOString();
+        const contextData = this.getContextData();
+        
         return {
             code: this.code,
             message: this.message,
             statusCode: this.statusCode || metadata.statusCode,
-            context: this.getContextData() || {},
+            context: {
+                ...(contextData || {}),
+                timestamp: contextData?.timestamp || now
+            },
             isRetryable: metadata.isRetryable,
-            timestamp: new Date().toISOString()
+            timestamp: now,
+            metadata
         };
     }
 }
@@ -203,7 +209,7 @@ export function enhanceErrorWithContext(
         contextData: {
             ...spotifyError.data?.contextData,
             ...context,
-            timestamp: new Date().toISOString()
+            timestamp: context.timestamp || new Date().toISOString()
         }
     };
     return spotifyError;
@@ -228,37 +234,3 @@ export function areSameErrorType(err1: unknown, err2: unknown): boolean {
 export function isInstanceOfSpotifyError(error: unknown): error is SpotifyHttpError {
     return error instanceof SpotifyHttpError;
 }
-
-export function isRetryableError(error: unknown): boolean {
-    if (!(error instanceof SpotifyHttpError)) return false;
-    
-    return (
-        error.code === ERROR_CODES.RATE_LIMIT ||
-        error.code === ERROR_CODES.NETWORK ||
-        (error.statusCode !== undefined && error.statusCode >= 500)
-    );
- }
- 
- export function areSameErrorType(err1: unknown, err2: unknown): boolean {
-    return err1 instanceof SpotifyHttpError && 
-           err2 instanceof SpotifyHttpError &&
-           err1.code === err2.code;
- }
- 
- export function isInstanceOfSpotifyError(error: unknown): error is SpotifyHttpError {
-    return error instanceof SpotifyHttpError;
- }
- 
- /**
- * Track validation specific error class
- */
- export class TrackValidationError extends SpotifyHttpError {
-    constructor(message: string, public invalidFields: string[]) {
-        super(message, 400, ERROR_CODES.VALIDATION);
-        this.name = 'TrackValidationError';
-    }
- }
- 
- // Remove these since they're imported from types.ts
- // export const ERROR_CODES = {...}
- // export const ERROR_REGISTRY = {...}

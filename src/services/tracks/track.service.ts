@@ -1,9 +1,9 @@
-// src/services/tracks/track.service.ts
-
 import { BaseService, ServiceDependencies } from '../base.service';
 import { Track, TrackRequestParams } from '../../types/spotify/track';
 import { SpotifyHttpError } from '../../core/http/errors';
-import { ERROR_CODES } from '../../core/http/errors/types'
+import { ERROR_CODES } from '../../core/http/errors/types';
+import { ResourceType, ServiceErrorHandler } from '../error-handler';
+
 /**
  * Service for interacting with Spotify's Track API endpoints
  * @class TrackService
@@ -12,6 +12,10 @@ import { ERROR_CODES } from '../../core/http/errors/types'
 export class TrackService extends BaseService {
     constructor(dependencies: ServiceDependencies) {
         super(dependencies);
+    }
+
+    protected getResourceType(): ResourceType {
+        return 'track';
     }
 
     /**
@@ -35,11 +39,9 @@ export class TrackService extends BaseService {
             // Validate the response
             return this.validateTrackResponse(track);
         } catch (error) {
-            return this.handleResourceError(error as SpotifyHttpError, {
-                resourceType: 'track',
-                resourceId: id,
-                additionalContext: market ? { market } : undefined
-            });
+            throw ServiceErrorHandler.handleError(error as SpotifyHttpError, 
+                this.createErrorContext(id, market ? { market } : undefined)
+            );
         }
     }
 
@@ -49,7 +51,7 @@ export class TrackService extends BaseService {
      */
     private validateTrackResponse(track: Track): Track {
         // Use base class method for common field validation
-        this.validateRequiredFields(track, ['id', 'name', 'type', 'uri'], 'track');
+        this.validateRequiredFields(track, ['id', 'name', 'type', 'uri']);
 
         // Track-specific validation
         if (!['track', 'episode'].includes(track.type)) {
@@ -71,7 +73,7 @@ export class TrackService extends BaseService {
         const params: TrackRequestParams = {};
     
         if (market) {
-            if (!this.isValidMarketCode(market)) {
+            if (!this.validateMarketCode(market)) {
                 throw new SpotifyHttpError(
                     'Invalid market code provided',
                     400,
