@@ -1,0 +1,61 @@
+Here's a detailed plan to refactor your error handling:
+
+1. **Phase 1: Create Core Error Types**
+```
+Create src/core/http/errors/types.ts:
+- Define ErrorCode type union
+- Define ErrorTypeMetadata interface 
+- Define BaseErrorContext interface
+- Define NormalizedError interface
+- Create ERROR_CODES const enum
+- Create ERROR_REGISTRY with metadata for each error type
+```
+
+2. **Phase 2: Consolidate Error Classes**
+```
+Create src/core/http/errors/spotify-errors.ts:
+- Move SpotifyHttpError base class
+- Move all derived error classes (RateLimit, Auth, Validation)
+- Define core error interfaces (SpotifyErrorResponse, SpotifyErrorData)
+- Move utility functions (isRetryableError, areSameErrorType, etc)
+```
+
+3. **Phase 3: Service Layer Error Handling**
+```
+Create src/services/error-handler.ts:
+- Move error handling logic from base.service.ts
+- Create ErrorContext interface
+- Create handleServiceError function
+- Add specific error transformation logic
+```
+
+4. **Phase 4: Clean Up and Integration**
+```
+Update base.service.ts:
+- Remove duplicate error definitions
+- Update imports to use new error structure
+- Update error handling to use new handleServiceError
+- Update type references
+
+Delete obsolete files:
+- Remove old error files
+- Remove duplicate definitions
+```
+
+5. **Phase 5: Update Tests**
+```
+Update test files:
+- Update imports in test files
+- Update error assertions
+- Add new test cases for centralized error handling
+```
+
+Each commit message format:
+```
+feat(errors): [Phase X] Description
+
+- Detailed change 1
+- Detailed change 2
+
+BREAKING CHANGE: Description of breaking changes
+```
