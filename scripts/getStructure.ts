@@ -40,29 +40,29 @@ class StructureScanner {
     }
 
     private generateInstructionPrompt(structure: string): string {
-        return `Hey here's my current directory structure:
-
-${structure}
-
-I want you to tell me what files you need to see in detail to help complete my task. 
-
-I have a script that can pull those files into one document for analysis. It requires an input.csv file formatted like:
-
-package.json,simple
-tsconfig.json,simple
-src/services/tracks/track.service.ts,simple
-src/__tests__/tracks.test.ts,simple
-
-Please provide:
-1. The list of file patterns needed (in CSV format)
-2. Any specific code sections to focus on
-3. Particular areas where you need context
-
-I'll generate the input.csv and provide the consolidated code context!
-
-please be conservative in your file selection as they may be rather large files and you aren't that good at pulling a ton into context yet`;
+        return `
+    Hey here's my current directory structure:
+    ${structure}
+    
+    I have summaries of many files in the /summaries directory that can give you a quick overview before diving into full file contents. Please format all file requests as CSV.
+    
+    For both summaries and full files, provide your requests in this CSV format:
+    filepath,type
+    
+    Example:
+    package.json,summary
+    src/services/tracks/track.service.ts,full
+    
+    Please provide your analysis in these steps:
+    1. First list summary files needed (in CSV format) to understand the context
+    2. After reviewing those summaries, list any full files needed (in CSV format)
+    3. Specific code sections to focus on
+    4. Particular areas where you need additional context
+    
+    This way we can be efficient - you can get a quick overview from summaries before pulling in larger full files. Please be conservative in your file selection as they may be rather large files and you should try to work with summaries when possible!
+    `
     }
-
+    
     private shouldIgnore(pathToCheck: string, isDirectory: boolean = false): boolean {
         const basename = path.basename(pathToCheck);
         if (isDirectory && basename === 'docs') return false;

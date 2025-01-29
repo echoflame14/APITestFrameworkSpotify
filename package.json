@@ -15,7 +15,8 @@
     "structure": "ts-node scripts/getStructure.ts",
     "diff": "ts-node scripts/diff.ts",
     "diff:verbose": "ts-node scripts/diff.ts --verbose",
-    "diff:compare": "ts-node scripts/diff.ts origin/main"
+    "diff:compare": "ts-node scripts/diff.ts origin/main",
+    "rag": "ts-node -r dotenv/config scripts/rag.ts"
   },
   "keywords": [
     "spotify",
@@ -29,12 +30,14 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.7",
     "axios": "^1.7.9",
+    "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.3",
     "clipboardy": "^4.0.0",
     "dotenv": "^16.4.7"
   }
