@@ -1,0 +1,6 @@
+{
+  "filePath": "src\\core\\config\\types.ts",
+  "summary": "The `.ts` file you provided appears to be a TypeScript file that defines the configuration types for a Spotify-related application or library. The main purpose of this file is to define the structure and properties of the `SpotifyConfig` interface, which represents the configuration settings for the application. This interface has two main properties: 1. `auth`: This object contains the necessary authentication-related information, such as the `clientId`, `clientSecret`, and the `tokenEndpoint`. 2. `api`: This object contains the configuration settings for the API, such as the `baseURL`, `timeout`, `retries`, and `retryDelay`. Additionally, the file defines a `ResourceType` type, which is a union of different string literals representing the various types of resources that can be accessed in the Spotify API, such as `'track'`, `'playlist'`, `'album'`, `'artist'`, and `'paged-playlists'`. This file likely serves as a centralized place to define the configuration and resource types used throughout the application or library that interacts with the Spotify API.",
+  "lastUpdated": "2025-01-29T00:29:07.422Z",
+  "fileHash": "96d2f3217f2ffb9c845208eadcdba6f5"
+}

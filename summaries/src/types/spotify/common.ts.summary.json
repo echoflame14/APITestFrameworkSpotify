@@ -1,0 +1,6 @@
+{
+  "filePath": "src\\types\\spotify\\common.ts",
+  "summary": "The provided TypeScript file `common.ts` defines several TypeScript interfaces that are commonly used in Spotify-related code. The main purpose of this file is to establish a common set of types and structures that can be shared across different parts of the Spotify application or library. The key functionality and types defined in this file are: 1. `ExternalUrls`: An interface that represents an object with a single property `spotify`, which is a string representing the URL for the Spotify resource. 2. `Restrictions`: An interface that represents an object with a single property `reason`, which can have one of three possible string values: `'market'`, `'product'`, or `'explicit'`. 3. `Image`: An interface that represents an object with three properties: `url` (a string representing the URL of the image), `height` (a number representing the height of the image), and `width` (a number representing the width of the image). These types are likely used throughout the Spotify application or library to ensure consistent data structures and facilitate type-safe interactions with Spotify-related data.",
+  "lastUpdated": "2025-01-29T00:30:05.740Z",
+  "fileHash": "eec0c70ab4e221ecce7473201fcf2e00"
+}

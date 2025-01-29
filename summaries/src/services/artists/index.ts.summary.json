@@ -1,0 +1,6 @@
+{
+  "filePath": "src\\services\\artists\\index.ts",
+  "summary": "This TypeScript file is responsible for exporting the main functionality related to the \"Artist\" domain or feature of an application. The file contains two export statements: 1. `export * from './artist.service';`: This line exports all the functionality from the `artist.service.ts` file, which likely contains the service-level logic for managing artist-related data and operations. 2. `export * from './artist.types';`: This line exports all the type definitions, interfaces, or enums related to the \"Artist\" domain, which are defined in the `artist.types.ts` file. In summary, this file acts as a central point of access for the \"Artist\" feature, allowing other parts of the application to import and use the service-level functionality and type definitions without having to worry about the underlying file structure or organization.",
+  "lastUpdated": "2025-01-29T00:29:50.030Z",
+  "fileHash": "87402accb4b4966b566b65dd65b52084"
+}

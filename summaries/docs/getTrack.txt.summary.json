@@ -1,0 +1,6 @@
+{
+  "filePath": "docs\\getTrack.txt",
+  "summary": "The main purpose of this API endpoint is to provide information about a single Spotify track identified by its unique Spotify ID. The key functionality includes: 1. **Request**: The API accepts two parameters: `id` (required, the Spotify ID of the track) and `market` (optional, an ISO 3166-1 alpha-2 country code to filter the content available in that market). 2. **Response**: The API returns a comprehensive response object containing details about the track, including:    - Album information (type, total tracks, available markets, cover art, etc.)    - Artist information (name, Spotify ID, etc.)    - Track-specific details (available markets, duration, explicit content, external IDs and URLs, popularity, etc.)    - Potential content restrictions and the reason for the restriction (e.g., market, product, explicit content) The API provides a way to retrieve detailed information about a specific Spotify track, which can be useful for music-related applications or services that need to display or interact with Spotify track data.",
+  "lastUpdated": "2025-01-29T00:28:29.840Z",
+  "fileHash": "912ea6006282f7c0cf6a1f5290feac57"
+}

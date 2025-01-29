@@ -1,0 +1,6 @@
+{
+  "filePath": "src\\core\\auth\\types.ts",
+  "summary": "This TypeScript (`.ts`) file contains two interfaces: 1. `AuthConfig`:    - This interface defines the configuration required for authentication, including:      - `clientId`: the client identifier used for authentication.      - `clientSecret`: the client secret used for authentication.      - `tokenEndpoint`: the endpoint where the authentication token is obtained. 2. `AuthToken`:    - This interface represents the structure of an authentication token, containing:      - `accessToken`: the token used for authentication.      - `expiresAt`: the timestamp (in seconds) when the access token expires. The main purpose of this file is to provide a clear and reusable structure for managing authentication-related data within a TypeScript-based application or service.",
+  "lastUpdated": "2025-01-29T00:29:03.591Z",
+  "fileHash": "1302483ee070f663257c20bff4a65a63"
+}

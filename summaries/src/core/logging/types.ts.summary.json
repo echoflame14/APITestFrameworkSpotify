@@ -1,0 +1,6 @@
+{
+  "filePath": "src\\core\\logging\\types.ts",
+  "summary": "This TypeScript file defines an interface called `Logger` that specifies the contract for a logging utility. The main purpose of this interface is to provide a standardized way to interact with a logging system. The `Logger` interface defines three methods: 1. `info(message: string, ...meta: any[]): void`: This method is used to log informational messages, along with any optional metadata. 2. `error(message: string, ...meta: any[]): void`: This method is used to log error messages, along with any optional metadata. 3. `warn(message: string, ...meta: any[]): void`: This method is used to log warning messages, along with any optional metadata. The key functionality of this interface is to provide a consistent and flexible way for other parts of the application to log messages, regardless of the underlying logging implementation. This can help with maintainability, testability, and flexibility in the logging system.",
+  "lastUpdated": "2025-01-29T00:29:46.160Z",
+  "fileHash": "5165de3581cda8c7cd49c0c0800ed4fd"
+}

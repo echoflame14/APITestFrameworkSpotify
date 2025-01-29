@@ -1,0 +1,6 @@
+{
+  "filePath": "src\\__tests__\\utils\\test-data.ts",
+  "summary": "This TypeScript file `test-data.ts` is used to provide test data for the application's unit tests. The main purpose of this file is to define a set of mock data that can be used to simulate Spotify-related data, such as track information and playlist metadata. The file exports an object `TEST_DATA` that contains three main properties: 1. `TRACKS`: This object defines a mock track data, specifically for the song \"Bohemian Rhapsody\" by the band Queen. 2. `PLAYLISTS`: This object defines a mock playlist data, specifically for the Spotify-owned playlist \"Today's Top Hits\". The playlist data includes various metadata such as the name, owner, tracks, and available markets. 3. `MARKETS`: This object defines a set of market codes (US, GB, JP) that can be used in the tests. The primary use of this test data is to provide a consistent and predictable set of data that can be used in unit tests, allowing developers to test the application's functionality without relying on real Spotify API data. This helps ensure the tests are reliable and independent of external factors.",
+  "lastUpdated": "2025-01-29T00:30:38.313Z",
+  "fileHash": "ca258adaa5db4547e6ccb2f29c4f7ab5"
+}

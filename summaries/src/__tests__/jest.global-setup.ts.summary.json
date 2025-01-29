@@ -1,0 +1,6 @@
+{
+  "filePath": "src\\__tests__\\jest.global-setup.ts",
+  "summary": "This TypeScript file is a global setup script for the Jest testing framework. The main purpose of this file is to configure the behavior of the `ConsoleLogger` utility during the test execution. The key functionality of this file includes: 1. **Configuring Console Logger in Test Mode**: In the `beforeAll` hook, the script sets the `ConsoleLogger.testMode.silent` property to `true` and the `ConsoleLogger.testMode.capture` property to `false`. This effectively disables the console logging during the test execution, ensuring a clean and controlled environment for the tests. 2. **Resetting Console Logger Logs**: In the `afterEach` hook, the script resets the `ConsoleLogger.testMode.logs` array to an empty array. This ensures that each test starts with a clean slate, without any lingering log entries from the previous test. By setting up the console logger in this way, the tests can run without the interference of console output, providing a more predictable and maintainable testing environment.",
+  "lastUpdated": "2025-01-29T00:30:20.379Z",
+  "fileHash": "22916665859f21bf145b803779f8ba7b"
+}

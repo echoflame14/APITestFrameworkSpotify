@@ -1,0 +1,6 @@
+{
+  "filePath": "package.json",
+  "summary": "The provided .json file describes a TypeScript-based Spotify API testing framework. Its main purpose is to provide an enterprise-grade solution for testing the Spotify API. Key functionality: 1. **Build and Testing**: The framework includes scripts for building the project (`npm run build`), running tests (`npm test`, `npm test:verbose`, `npm test:debug`, `npm test:coverage`), and debugging the authentication process (`npm run debug:auth`). 2. **Codebase Management**: The framework includes scripts for capturing the codebase (`npm run capture`, `npm run capture:verbose`), analyzing the project structure (`npm run structure`), and comparing changes between branches (`npm run diff`, `npm run diff:verbose`, `npm run diff:compare`). 3. **Reporting**: The framework includes a script for generating a simple RAG (Red-Amber-Green) report (`npm run rag`). The project is built using TypeScript and includes dependencies such as Axios for making HTTP requests, Jest for testing, and Anthropic AI SDK for potential integration with AI-powered tools.",
+  "lastUpdated": "2025-01-29T00:28:42.733Z",
+  "fileHash": "1829e5de8e4e48006b5fe4b409eb8e75"
+}
