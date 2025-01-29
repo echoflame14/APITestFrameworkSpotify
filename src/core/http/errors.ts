@@ -1,4 +1,13 @@
 // src/core/http/errors.ts
+import type { 
+    BaseErrorContext, 
+    ErrorTypeMetadata, 
+    NormalizedError,
+    ErrorCode
+} from './errors/types';
+
+// Use imported ERROR_CODES and ERROR_REGISTRY from types instead of redefining
+import { ERROR_CODES, ERROR_REGISTRY } from './errors/types';
 
 export interface SpotifyErrorResponse {
     error?: {
@@ -7,20 +16,7 @@ export interface SpotifyErrorResponse {
         code?: string;
     };
     retryAfter?: number;
-}
-
-export interface BaseErrorContext {
-    validationErrors?: {
-        missingFields?: string[];
-        invalidTypes?: string[];
-        expectedType?: string;
-        receivedType?: string;
-    };
-    // Keep other existing properties
-    resourceType?: string;
-    resourceId?: string;
-    [key: string]: unknown;
-}
+} 
 
 export interface SpotifyErrorData {
     error?: {
@@ -43,30 +39,63 @@ export interface SpotifyErrorData {
 }
 
 export class SpotifyHttpError extends Error {
-    declare code: 'PLAYLIST_NOT_FOUND' | 'INVALID_ID_FORMAT' | 
-                 'RATE_LIMIT_ERROR' | 'INVALID_MARKET' | 
-                 'NETWORK_ERROR' | string;
+    declare code: ErrorCode;
 
     constructor(
         public message: string,
         public statusCode?: number,
-        code?: string,
+        code?: ErrorCode,
         public data?: SpotifyErrorData
     ) {
         super(message);
-        this.code = code || this.deriveErrorCode(message);
+        this.code = code || this.deriveErrorCode(message) as ErrorCode;
         this.name = 'SpotifyHttpError';
         Object.setPrototypeOf(this, SpotifyHttpError.prototype);
     }
 
-    private deriveErrorCode(message: string): string {
-        const codeMap: Record<string, string> = {
-            'not found': 'NOT_FOUND',
-            'invalid id': 'INVALID_ID',
-            'invalid playlist': 'INVALID_ID_FORMAT',
-            'rate limit': 'RATE_LIMIT',
-            'network error': 'NETWORK_ERROR',
-            'invalid market': 'INVALID_MARKET'
+    static createFromError(error: unknown, context?: BaseErrorContext): SpotifyHttpError {
+        if (error instanceof SpotifyHttpError) return error;
+        
+        if (isSpotifyErrorResponse(error)) {
+            return new SpotifyHttpError(
+                error.error?.message || 'Unknown Spotify error',
+                error.error?.status,
+                error.error?.code as ErrorCode,
+                {
+                    originalError: error,
+                    contextData: context
+                }
+            );
+        }
+
+        if (error instanceof Error) {
+            return new SpotifyHttpError(
+                error.message,
+                undefined,
+                ERROR_CODES.UNKNOWN,
+                {
+                    originalError: error,
+                    contextData: context
+                }
+            );
+        }
+
+        return new SpotifyHttpError(
+            'Unknown error occurred',
+            undefined,
+            ERROR_CODES.UNKNOWN,
+            { contextData: context }
+        );
+    }
+
+    private deriveErrorCode(message: string): ErrorCode {
+        const codeMap: Record<string, ErrorCode> = {
+            'not found': ERROR_CODES.NOT_FOUND,
+            'invalid id': ERROR_CODES.INVALID_ID,
+            'invalid playlist': ERROR_CODES.INVALID_ID,
+            'rate limit': ERROR_CODES.RATE_LIMIT,
+            'network error': ERROR_CODES.NETWORK,
+            'invalid market': ERROR_CODES.INVALID_MARKET
         };
 
         const lowerMessage = message.toLowerCase();
@@ -74,7 +103,11 @@ export class SpotifyHttpError extends Error {
             lowerMessage.includes(key)
         );
 
-        return matchedKey ? codeMap[matchedKey] : 'UNKNOWN_ERROR';
+        return matchedKey ? codeMap[matchedKey] : ERROR_CODES.UNKNOWN;
+    }
+
+    getMetadata(): ErrorTypeMetadata {
+        return ERROR_REGISTRY[this.code] || ERROR_REGISTRY[ERROR_CODES.UNKNOWN];
     }
 
     getSpotifyErrorMessage(): string {
@@ -92,6 +125,18 @@ export class SpotifyHttpError extends Error {
     isServerError(): boolean {
         return this.statusCode ? this.statusCode >= 500 : false;
     }
+
+    toNormalizedError(): NormalizedError {
+        const metadata = this.getMetadata();
+        return {
+            code: this.code,
+            message: this.message,
+            statusCode: this.statusCode || metadata.statusCode,
+            context: this.getContextData() || {},
+            isRetryable: metadata.isRetryable,
+            timestamp: new Date().toISOString()
+        };
+    }
 }
 
 export class SpotifyRateLimitError extends SpotifyHttpError {
@@ -99,7 +144,7 @@ export class SpotifyRateLimitError extends SpotifyHttpError {
         super(
             `Rate limited: ${message}`,
             429,
-            'RATE_LIMIT_ERROR',
+            ERROR_CODES.RATE_LIMIT,
             {
                 ...data,
                 retryAfter
@@ -113,6 +158,30 @@ export class SpotifyRateLimitError extends SpotifyHttpError {
     }
 }
 
+export class SpotifyAuthenticationError extends SpotifyHttpError {
+    constructor(message: string, public authType: 'token' | 'client') {
+        super(message, 401, ERROR_CODES.AUTHENTICATION);
+        this.name = 'SpotifyAuthenticationError';
+    }
+}
+
+export class SpotifyValidationError extends SpotifyHttpError {
+    constructor(
+        message: string,
+        public validationDetails: BaseErrorContext['validationErrors']
+    ) {
+        super(message, 400, ERROR_CODES.VALIDATION);
+        this.name = 'SpotifyValidationError';
+    }
+}
+
+export class TrackValidationError extends SpotifyHttpError {
+    constructor(message: string, public invalidFields: string[]) {
+        super(message, 400, ERROR_CODES.VALIDATION);
+        this.name = 'TrackValidationError';
+    }
+}
+
 export function isSpotifyErrorResponse(data: unknown): data is SpotifyErrorResponse {
     if (typeof data !== 'object' || data === null) return false;
     
@@ -123,3 +192,73 @@ export function isSpotifyErrorResponse(data: unknown): data is SpotifyErrorRespo
         (!potentialError.error.code || typeof potentialError.error.code === 'string')
     );
 }
+
+export function enhanceErrorWithContext(
+    error: unknown,
+    context: BaseErrorContext
+): SpotifyHttpError {
+    const spotifyError = SpotifyHttpError.createFromError(error);
+    spotifyError.data = {
+        ...spotifyError.data,
+        contextData: {
+            ...spotifyError.data?.contextData,
+            ...context,
+            timestamp: new Date().toISOString()
+        }
+    };
+    return spotifyError;
+}
+
+export function isRetryableError(error: unknown): boolean {
+    if (!(error instanceof SpotifyHttpError)) return false;
+    
+    return (
+        error.code === ERROR_CODES.RATE_LIMIT ||
+        error.code === ERROR_CODES.NETWORK ||
+        (error.statusCode !== undefined && error.statusCode >= 500)
+    );
+}
+
+export function areSameErrorType(err1: unknown, err2: unknown): boolean {
+    return err1 instanceof SpotifyHttpError && 
+           err2 instanceof SpotifyHttpError &&
+           err1.code === err2.code;
+}
+
+export function isInstanceOfSpotifyError(error: unknown): error is SpotifyHttpError {
+    return error instanceof SpotifyHttpError;
+}
+
+export function isRetryableError(error: unknown): boolean {
+    if (!(error instanceof SpotifyHttpError)) return false;
+    
+    return (
+        error.code === ERROR_CODES.RATE_LIMIT ||
+        error.code === ERROR_CODES.NETWORK ||
+        (error.statusCode !== undefined && error.statusCode >= 500)
+    );
+ }
+ 
+ export function areSameErrorType(err1: unknown, err2: unknown): boolean {
+    return err1 instanceof SpotifyHttpError && 
+           err2 instanceof SpotifyHttpError &&
+           err1.code === err2.code;
+ }
+ 
+ export function isInstanceOfSpotifyError(error: unknown): error is SpotifyHttpError {
+    return error instanceof SpotifyHttpError;
+ }
+ 
+ /**
+ * Track validation specific error class
+ */
+ export class TrackValidationError extends SpotifyHttpError {
+    constructor(message: string, public invalidFields: string[]) {
+        super(message, 400, ERROR_CODES.VALIDATION);
+        this.name = 'TrackValidationError';
+    }
+ }
+ 
+ // Remove these since they're imported from types.ts
+ // export const ERROR_CODES = {...}
+ // export const ERROR_REGISTRY = {...}

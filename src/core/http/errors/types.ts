@@ -120,7 +120,11 @@ export const ERROR_CODES = {
     INVALID_ID: 'INVALID_ID_FORMAT',
     INVALID_MARKET: 'INVALID_MARKET',
     SERVER_ERROR: 'SERVER_ERROR',
-    UNKNOWN: 'UNKNOWN_ERROR'
+    UNKNOWN: 'UNKNOWN_ERROR',
+    INVALID_RESPONSE: 'INVALID_RESPONSE',
+    INVALID_METHOD: 'INVALID_METHOD',
+    RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
+    AUTH_ERROR: 'AUTH_ERROR'
 } as const;
 
 /**
@@ -194,5 +198,33 @@ export const ERROR_REGISTRY: Record<ErrorCode, ErrorTypeMetadata> = {
         defaultMessage: 'An unknown error occurred.',
         severity: 'high',
         statusCode: 500
-    }
+    },
+    [ERROR_CODES.INVALID_RESPONSE]: {
+        code: ERROR_CODES.INVALID_RESPONSE,
+        isRetryable: false,
+        defaultMessage: 'Invalid response received from the server.',
+        severity: 'high',
+        statusCode: 500
+    },
+    [ERROR_CODES.INVALID_METHOD]: {
+        code: ERROR_CODES.INVALID_METHOD,
+        isRetryable: false,
+        defaultMessage: 'Invalid HTTP method used.',
+        severity: 'high',
+        statusCode: 405
+      },
+      [ERROR_CODES.RATE_LIMIT_EXCEEDED]: {
+        code: ERROR_CODES.RATE_LIMIT_EXCEEDED,
+        isRetryable: true,
+        defaultMessage: 'Rate limit exceeded. Please try again later.',
+        severity: 'medium',
+        statusCode: 429
+      },
+      [ERROR_CODES.AUTH_ERROR]: {
+        code: ERROR_CODES.AUTH_ERROR,
+        isRetryable: false,
+        defaultMessage: 'Authentication error occurred.',
+        severity: 'high',
+        statusCode: 401
+      }
 };

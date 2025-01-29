@@ -1,10 +1,9 @@
-﻿// src/core/http/client.ts
-import axios, { 
+﻿import axios, { 
     AxiosInstance, 
     AxiosError, 
     AxiosRequestConfig,
     InternalAxiosRequestConfig,
-    AxiosHeaders // Add this import
+    AxiosHeaders
 } from 'axios';
 import { Logger } from '../logging/types';
 import { HttpClientConfig } from './types';
@@ -14,6 +13,8 @@ import {
     isSpotifyErrorResponse,
     SpotifyErrorData
 } from './errors';
+// Import ERROR_CODES and ErrorCode from the types file
+import { ERROR_CODES, ErrorCode } from './errors/types';
 
 export class HttpClient {
     private client: AxiosInstance;
@@ -88,14 +89,19 @@ export class HttpClient {
                 );
             }
 
-            if (isSpotifyErrorResponse(data) && data.error) {
-                return new SpotifyHttpError(
-                    data.error.message,
-                    status,
-                    data.error.code,
-                    { ...errorData, error: data.error }
-                );
-            }
+                if (isSpotifyErrorResponse(data) && data.error) {
+            // Ensure the code is a valid ErrorCode or fall back to ERROR_CODES.UNKNOWN
+            const errorCode = Object.values(ERROR_CODES).includes(data.error.code as ErrorCode)
+                ? (data.error.code as ErrorCode)
+                : ERROR_CODES.UNKNOWN;
+
+            return new SpotifyHttpError(
+                data.error.message,
+                status,
+                errorCode, // Use the validated errorCode
+                { ...errorData, error: data.error }
+            );
+        }
         }
 
         return this.createGenericError(error, errorData);
@@ -111,16 +117,16 @@ export class HttpClient {
             return new SpotifyHttpError(
                 'Network connection failed',
                 undefined,
-                'NETWORK_ERROR',
-                { ...data, contextData: { code: 'NETWORK_ERROR' } }
+                ERROR_CODES.NETWORK,
+                { ...data, contextData: { code: ERROR_CODES.NETWORK } }
             );
         }
-
+    
         return new SpotifyHttpError(
             'Request processing failed',
             undefined,
-            'CLIENT_ERROR',
-            { ...data, contextData: { code: 'CLIENT_ERROR' } }
+            ERROR_CODES.NETWORK, // Changed from CLIENT_ERROR to NETWORK based on your error types
+            { ...data, contextData: { code: ERROR_CODES.NETWORK } }
         );
     }
 
