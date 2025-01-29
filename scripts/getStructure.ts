@@ -148,26 +148,20 @@ class StructureScanner {
         return output;
     }
 
-    public scan(rootDir: string): { 
-        tree: DirectoryNode; 
-        formatted: string;
-        prompt: string;
-    } {
+    public scan(rootDir: string): string {
         const absoluteRootDir = path.resolve(rootDir);
         const tree = this.scanDirectory(absoluteRootDir, absoluteRootDir);
         const formatted = this.formatTree(tree);
-        const prompt = this.generateInstructionPrompt(formatted);
-        return { tree, formatted, prompt };
+        return this.generateInstructionPrompt(formatted);
     }
 }
 
 if (require.main === module) {
     (async () => {
         const scanner = new StructureScanner();
-        const { tree, formatted, prompt } = scanner.scan(process.cwd());
+        const prompt = scanner.scan(process.cwd());
         
-        fs.writeFileSync('structure.json', JSON.stringify(tree, null, 2), 'utf-8');
-        fs.writeFileSync('structure.txt', formatted, 'utf-8');
+        // Only write to paste.txt
         fs.writeFileSync('paste.txt', prompt, 'utf-8');
 
         try {
@@ -179,8 +173,6 @@ if (require.main === module) {
             console.log(prompt);
         }
 
-        console.log('\nEnhanced Directory Structure:');
-        console.log(formatted);
-        console.log('\nSaved to: structure.json, structure.txt, paste.txt');
+        console.log('\nSaved to: paste.txt');
     })();
 }

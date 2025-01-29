@@ -3,7 +3,6 @@ import * as fs from 'fs';
 
 class DiffCapturer {
     private readonly outputFile = 'paste.txt';
-    
     constructor(private verbose: boolean = false) {}
 
     private log(message: string): void {
@@ -36,10 +35,14 @@ class DiffCapturer {
     }
 
     public captureDiff(target?: string): void {
-        try {
-            const diffOutput = this.executeGitDiff(target);
-            
-            const commitPrompt = `#!/bin/bash
+        if (fs.existsSync('./paste.txt')) {
+            console.log('⚠️ Warning: paste.txt already exists');
+            process.exit(1);
+        }
+
+        const diffOutput = this.executeGitDiff(target);
+
+        const commitPrompt = `#!/bin/bash
 # Auto-generated commit command builder | paste into terminal
 # INSTRUCTIONS:
 # 1. AI should generate a single -m argument for semantic commits
@@ -51,23 +54,17 @@ echo "Generated commit command:"
 echo "git commit -m \\"
 `;
 
-            const header = `# DIFF CONTENT BELOW - ${new Date().toISOString()}\n` +
-                         `# git diff ${target || 'HEAD'}\n\n` +
-                         `cat << 'EOF'\n`;
-            
-            const footer = `EOF\n`;
-            
-            fs.writeFileSync(this.outputFile, 
-                commitPrompt + header + diffOutput + footer, 
-                { mode: 0o755, encoding: 'utf-8' }
-            );
-            console.log(`✅ Generated paste-ready file: ${this.outputFile}`);
-            
-        } catch (error) {
-            console.error('❌ Error capturing diff:');
-            if (error instanceof Error) console.error(error.message);
-            process.exit(1);
-        }
+        const header = `# DIFF CONTENT BELOW - ${new Date().toISOString()}\n` +
+                     `# git diff ${target || 'HEAD'}\n\n` +
+                     `cat << 'EOF'\n`;
+        
+        const footer = `EOF\n`;
+        
+        fs.writeFileSync(this.outputFile, 
+            commitPrompt + header + diffOutput + footer, 
+            { mode: 0o755, encoding: 'utf-8' }
+        );
+        console.log(`✅ Generated paste-ready file: ${this.outputFile}`);
     }
 }
 
